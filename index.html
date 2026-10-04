@@ -177,6 +177,11 @@ details[open] > summary { margin-bottom: 10px; }
 footer.foot { color: var(--muted); font-size: .8rem; max-width: 100ch; display: grid; gap: 6px; }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 [hidden] { display: none !important; }
+.live { align-items: center; }
+.live .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--seat-empty); flex: none; }
+.live .dot.ok { background: var(--ok); }
+.live .dot.bad { background: var(--bad); }
+.live .dot.busy { background: var(--mark); }
 </style>
 </head>
 <body>
@@ -223,6 +228,26 @@ footer.foot { color: var(--muted); font-size: .8rem; max-width: 100ch; display: 
       <button type="button" id="btn-sim">Simular votos al azar</button>
       <button type="button" id="btn-borrar" class="danger">Borrar votos</button>
     </div>
+  </div>
+
+  <div class="toolbar live" id="live" aria-live="polite">
+    <span class="dot" id="live-dot" aria-hidden="true"></span>
+    <div style="display:grid;gap:2px;min-width:0">
+      <strong>Resultados del TSJE</strong>
+      <span class="small muted" id="live-estado">Sin datos todavía.</span>
+      <span class="small" id="live-error" style="color:var(--bad)" hidden></span>
+    </div>
+    <span class="grow"></span>
+    <label class="btnrow small" for="live-auto"><input type="checkbox" id="live-auto" checked> Actualizar solo</label>
+    <label class="field" for="live-int">Cada
+      <select id="live-int">
+        <option value="30">30 s</option>
+        <option value="60" selected>1 min</option>
+        <option value="120">2 min</option>
+        <option value="300">5 min</option>
+      </select>
+    </label>
+    <button type="button" id="live-ya" class="primary">Actualizar ahora</button>
   </div>
 
   <div id="banner" class="banner" hidden>Simulación con números al azar. No son resultados reales.</div>
@@ -480,6 +505,7 @@ const Engine = (() => {
 const KEY = "bancas-junta-asu-2026-v1";
 const nuevo2026 = () => ({
   esc: "2026", modo: "pref", bancas: 24, blancos: 0, nulos: 0, simulado: false, sorteo: [], sorteoKey: "",
+  tsje: null, auto: true, intervalo: 60,
   sel: LISTAS_2026[0].numero,
   listas: LISTAS_2026.map(l => ({ numero: l.numero, sigla: l.sigla, nombre: l.nombre, color: l.color, texto: l.texto,
     total: 0, cands: l.cands.map(n => ({ nombre: n, pref: 0 })) })),
@@ -497,7 +523,8 @@ try {
   if (raw) {
     const g = JSON.parse(raw);
     if (g && Array.isArray(g.listas)) {
-      Object.assign(S2026, { modo: g.modo === "tot" ? "tot" : "pref", bancas: g.bancas || 24, blancos: g.blancos || 0, nulos: g.nulos || 0, simulado: !!g.simulado, sel: g.sel || S2026.sel, sorteo: g.sorteo || [], sorteoKey: g.sorteoKey || "" });
+      Object.assign(S2026, { modo: g.modo === "tot" ? "tot" : "pref", bancas: g.bancas || 24, blancos: g.blancos || 0, nulos: g.nulos || 0, simulado: !!g.simulado, sel: g.sel || S2026.sel, sorteo: g.sorteo || [], sorteoKey: g.sorteoKey || "",
+        tsje: g.tsje || null, auto: g.auto !== false, intervalo: g.intervalo || 60 });
       g.listas.forEach(gl => {
         const l = S2026.listas.find(x => x.numero === gl.numero);
         if (!l) return;
@@ -510,11 +537,13 @@ try {
 let S = S2026;
 
 function guardar() {
-  if (S.esc !== "2026") return;
+  // siempre se guarda el escenario 2026 (la actualización automática lo modifica aunque se esté viendo 2021)
+  const G = S2026;
   try {
     localStorage.setItem(KEY, JSON.stringify({
-      modo: S.modo, bancas: S.bancas, blancos: S.blancos, nulos: S.nulos, simulado: S.simulado, sel: S.sel, sorteo: S.sorteo, sorteoKey: S.sorteoKey,
-      listas: S.listas.map(l => ({ numero: l.numero, total: l.total, prefs: l.cands.map(c => c.pref) })),
+      modo: G.modo, bancas: G.bancas, blancos: G.blancos, nulos: G.nulos, simulado: G.simulado, sel: G.sel, sorteo: G.sorteo, sorteoKey: G.sorteoKey,
+      tsje: G.tsje || null, auto: G.auto !== false, intervalo: G.intervalo || 60,
+      listas: G.listas.map(l => ({ numero: l.numero, total: l.total, prefs: l.cands.map(c => c.pref) })),
     }));
   } catch (e) { /* ignorar */ }
 }
@@ -999,7 +1028,8 @@ function borrar(b) {
   clearTimeout(armado); b.classList.remove("armed"); b.textContent = "Borrar votos";
   S.listas.forEach(l => { l.total = 0; l.cands.forEach(c => { c.pref = 0; }); });
   S.blancos = 0; S.nulos = 0; S.simulado = false; S.sorteo = []; S.sorteoKey = "";
-  syncToolbar(); renderCarga(); recalcular(true);
+  if (S === S2026) S2026.tsje = null; // la próxima consulta vuelve a cargar los datos del TSJE
+  syncToolbar(); renderCarga(); recalcular(true); pintarLive(ultimoError);
   toast("Votos borrados");
 }
 function textoResultado() {
@@ -1030,10 +1060,160 @@ async function copiar() {
   }
 }
 
+/* ===================== RESULTADOS EN VIVO (TSJE) ===================== */
+// El TSJE no envía cabeceras CORS: el navegador bloquea leerlo directo desde GitHub Pages.
+// Por eso una GitHub Action copia la respuesta a data/junta.json en este mismo repo.
+// Se consultan varias fuentes y se usa la que tenga más mesas publicadas.
+const TSJE_URL = "https://resultados.tsje.gov.py/publicacion/dinamics/divulgacion.ajax.php?codeleccion=47&candidatura=2&departamento=0&distrito=0";
+const LIVE = {
+  rama: "main",          // rama donde la Action guarda data/junta.json
+  // URL pública del puente (server.js) para usar desde GitHub Pages, p. ej. "https://mi-puente.onrender.com/api/junta"
+  proxy: "https://7tqhh0w8-3000.brs.devtunnels.ms/api/junta",
+  directoBloqueado: false,
+  timer: null, proxima: 0, cargando: false,
+};
+function fuentesLive() {
+  const f = [];
+  const t = Date.now();
+  if (LIVE.proxy) f.push({ nombre: "puente", url: LIVE.proxy + (LIVE.proxy.includes("?") ? "&" : "?") + "t=" + t });
+  // si la página la sirve server.js, el puente está en el mismo origen
+  if (!location.hostname.endsWith(".github.io") && location.protocol.startsWith("http")) f.push({ nombre: "puente local", url: "api/junta?t=" + t });
+  f.push({ nombre: "copia del repo", url: "data/junta.json?t=" + t });
+  // en *.github.io también se lee la copia cruda del repo (no depende de que Pages se vuelva a publicar)
+  const h = location.hostname;
+  if (h.endsWith(".github.io")) {
+    const owner = h.split(".")[0];
+    const seg = location.pathname.split("/").filter(Boolean)[0];
+    const repo = seg && !seg.includes(".") ? seg : h;
+    f.push({ nombre: "GitHub", url: `https://raw.githubusercontent.com/${owner}/${repo}/${LIVE.rama}/data/junta.json?t=${t}` });
+  }
+  if (!LIVE.directoBloqueado) f.push({ nombre: "TSJE directo", url: TSJE_URL, directo: true });
+  return f;
+}
+async function bajarFuente(f) {
+  const ctl = new AbortController();
+  const to = setTimeout(() => ctl.abort(), 20000);
+  try {
+    // los túneles de VS Code (devtunnels.ms) muestran una página de aviso salvo que se envíe este header
+    const headers = /devtunnels\.ms/.test(f.url) ? { "X-Tunnel-Skip-AntiPhishing-Page": "true" } : undefined;
+    const r = await fetch(f.url, { cache: "no-store", signal: ctl.signal, headers });
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    const d = JSON.parse(await r.text());
+    if (!d || !d.totales || !Array.isArray(d.candidatos)) throw new Error("formato inesperado");
+    if (Number(d.totales.tipCandidatura) !== 2) throw new Error("no es la Junta Municipal (candidatura " + d.totales.tipCandidatura + ")");
+    return { f, d };
+  } catch (e) {
+    if (f.directo) LIVE.directoBloqueado = true; // CORS: no reintentar cada ciclo
+    throw new Error(f.nombre + ": " + (e.name === "AbortError" ? "sin respuesta" : e.message));
+  } finally { clearTimeout(to); }
+}
+const normNom = s => String(s || "").normalize("NFD").replace(/[^A-Za-z0-9]/g, "").toUpperCase();
+function firmaTSJE(d) { return JSON.stringify([d.totales, d.candidatos.map(L => [L.numLista, L.votos, (L.candidatosPref || []).map(p => [p.ordCandidato, p.votos])])]); }
+
+function aplicarTSJE(d, fuente) {
+  const G = S2026;
+  const firma = firmaTSJE(d);
+  const meta = {
+    mesas: toInt(d.totales.mesasPublicadas), totalMesas: toInt(d.totales.totalMesas),
+    hora: d.horaFormated || "", descargado: d.descargado || "", fuente, firma, avisos: [],
+    leido: new Date().toISOString(),
+  };
+  if (G.tsje && G.tsje.firma === firma) { G.tsje.leido = meta.leido; G.tsje.fuente = fuente; return false; }
+  d.candidatos.forEach(L => {
+    const num = String(L.numLista).trim();
+    const l = G.listas.find(x => x.numero === num);
+    if (!l) { meta.avisos.push(`La lista ${num} del TSJE no está en la página`); return; }
+    const prefs = L.candidatosPref || [];
+    let suma = 0, distintos = 0;
+    prefs.forEach(p => {
+      const c = l.cands[toInt(p.ordCandidato) - 1];
+      const v = toInt(p.votos); suma += v;
+      if (!c) { meta.avisos.push(`Lista ${num}: candidato de orden ${p.ordCandidato} inexistente`); return; }
+      if (normNom(c.nombre) !== normNom(p.nomCandidato)) distintos++;
+      c.pref = v;
+    });
+    l.total = toInt(L.votos);
+    if (prefs.length && suma !== l.total) meta.avisos.push(`Lista ${num}: el TSJE informa ${fmt(l.total)} votos y la suma de preferenciales da ${fmt(suma)}; se usa la suma (art. 258)`);
+    if (distintos) meta.avisos.push(`Lista ${num}: ${distintos} nombre(s) no coinciden exactamente con el orden cargado; revisar`);
+  });
+  G.blancos = toInt(d.totales.blancos);
+  G.nulos = toInt(d.totales.nulos);
+  G.simulado = false;
+  G.tsje = meta;
+  return true;
+}
+
+function pintarLive(msgError) {
+  const G = S2026, m = G.tsje;
+  const dot = $("live-dot");
+  dot.className = "dot " + (LIVE.cargando ? "busy" : msgError ? "bad" : m ? "ok" : "");
+  if (m) {
+    const p = m.totalMesas ? fDec.format(m.mesas * 100 / m.totalMesas) : "0,00";
+    const seg = Math.max(0, Math.round((LIVE.proxima - Date.now()) / 1000));
+    $("live-estado").textContent = `${fmt(m.mesas)} de ${fmt(m.totalMesas)} mesas (${p} %) · dato del TSJE ${m.hora || "—"} · vía ${m.fuente}` +
+      (G.auto ? ` · próxima consulta en ${seg} s` : " · actualización automática apagada") +
+      (m.avisos && m.avisos.length ? ` · ⚠ ${m.avisos.join(" · ")}` : "");
+  } else {
+    $("live-estado").textContent = LIVE.cargando ? "Consultando…" : "Sin datos todavía.";
+  }
+  const er = $("live-error");
+  er.hidden = !msgError; er.textContent = msgError || "";
+}
+
+let ultimoError = "";
+async function actualizarLive() {
+  if (LIVE.cargando) return;
+  LIVE.cargando = true; pintarLive(ultimoError);
+  const fuentes = fuentesLive();
+  const res = await Promise.allSettled(fuentes.map(bajarFuente));
+  const ok = res.filter(r => r.status === "fulfilled").map(r => r.value);
+  LIVE.cargando = false;
+  if (!ok.length) {
+    ultimoError = "No se pudo leer ninguna fuente. " + res.map(r => r.reason && r.reason.message).filter(Boolean).join(" | ") +
+      ". Si la página está en GitHub Pages, revisá que la Action “Actualizar resultados TSJE” esté corriendo.";
+  } else {
+    ultimoError = "";
+    // la fuente más avanzada: más mesas publicadas, luego más votos
+    ok.sort((a, b) => (toInt(b.d.totales.mesasPublicadas) - toInt(a.d.totales.mesasPublicadas)) || (toInt(b.d.totales.totalVotos) - toInt(a.d.totales.totalVotos)));
+    const mejor = ok[0];
+    // no retroceder: si ya hay datos con más mesas, no se pisan con una copia vieja
+    const actual = S2026.tsje ? S2026.tsje.mesas : -1;
+    if (toInt(mejor.d.totales.mesasPublicadas) >= actual) {
+      const cambio = aplicarTSJE(mejor.d, mejor.f.nombre);
+      if (cambio) {
+        guardar();
+        if (S === S2026) { renderCarga(); renderResultados(); }
+        toast("Votos actualizados con datos del TSJE");
+      } else guardar();
+    }
+  }
+  programarLive();
+  pintarLive(ultimoError);
+}
+function programarLive() {
+  clearTimeout(LIVE.timer);
+  if (!S2026.auto) { LIVE.proxima = 0; return; }
+  const ms = (S2026.intervalo || 60) * 1000;
+  LIVE.proxima = Date.now() + ms;
+  LIVE.timer = setTimeout(actualizarLive, ms);
+}
+setInterval(() => { if (S2026.auto && !LIVE.cargando) pintarLive(ultimoError); }, 1000);
+document.addEventListener("visibilitychange", () => {
+  // al volver a la pestaña, consultar enseguida si ya pasó el intervalo
+  if (!document.hidden && S2026.auto && Date.now() >= LIVE.proxima) actualizarLive();
+});
+$("live-auto").checked = S2026.auto !== false;
+$("live-int").value = String(S2026.intervalo || 60);
+$("live-auto").addEventListener("change", e => { S2026.auto = e.target.checked; guardar(); if (S2026.auto) actualizarLive(); else programarLive(); pintarLive(ultimoError); });
+$("live-int").addEventListener("change", e => { S2026.intervalo = toInt(e.target.value) || 60; guardar(); programarLive(); pintarLive(ultimoError); });
+$("live-ya").addEventListener("click", () => actualizarLive());
+
 /* ===================== INICIO ===================== */
 syncToolbar();
 renderCarga();
 renderResultados();
+pintarLive("");
+if (S2026.auto) actualizarLive();
 </script>
 </body>
 </html>

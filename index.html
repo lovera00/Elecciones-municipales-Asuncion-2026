@@ -1,0 +1,1039 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bancas Junta Asunción</title>
+<meta name="description" content="Reparto D'Hondt con voto preferencial de los 24 concejales de la Junta Municipal de Asunción, elecciones municipales 2026">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: hoja de escrutinio. Carga de votos a la izquierda, acta de resultados a la derecha;
+   concejales electos, cocientes y base legal a todo el ancho debajo. */
+:root {
+  --paper: #EDF0F3;
+  --sheet: #FFFFFF;
+  --ink: #131A29;
+  --muted: #5A6477;
+  --line: #D3DAE3;
+  --line-soft: #E6EAF0;
+  --accent: #0D6966;
+  --accent-soft: #DCEFEE;
+  --accent-ink: #FFFFFF;
+  --mark: #FFD94A;
+  --mark-ink: #3A2E00;
+  --warn-bg: #FFF3DC;
+  --warn: #8F4600;
+  --bad: #B42318;
+  --bad-bg: #FDECEA;
+  --ok: #1D7447;
+  --ok-bg: #E3F3EA;
+  --seat-empty: #D9DEE6;
+  --shadow: 0 1px 2px rgba(19, 26, 41, .06), 0 4px 16px rgba(19, 26, 41, .05);
+  --f-display: "Archivo", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+  --f-body: "Archivo", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+  --r: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0E131A; --sheet: #151C26; --ink: #E5EAF1; --muted: #98A3B4; --line: #2A3443; --line-soft: #202936;
+    --accent: #4CBDB7; --accent-soft: #143634; --accent-ink: #06201F; --mark: #E8C53A; --mark-ink: #1E1700;
+    --warn-bg: #2E2410; --warn: #F1B969; --bad: #FF8A80; --bad-bg: #3A1716; --ok: #6FD39C; --ok-bg: #12301F;
+    --seat-empty: #2A3443;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 4px 16px rgba(0, 0, 0, .25);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #0E131A; --sheet: #151C26; --ink: #E5EAF1; --muted: #98A3B4; --line: #2A3443; --line-soft: #202936;
+  --accent: #4CBDB7; --accent-soft: #143634; --accent-ink: #06201F; --mark: #E8C53A; --mark-ink: #1E1700;
+  --warn-bg: #2E2410; --warn: #F1B969; --bad: #FF8A80; --bad-bg: #3A1716; --ok: #6FD39C; --ok-bg: #12301F;
+  --seat-empty: #2A3443;
+  --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 4px 16px rgba(0, 0, 0, .25);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { background: var(--paper); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.5; margin: 0; }
+.wrap { max-width: 1320px; margin: 0 auto; padding-inline: 16px; padding-block: 24px 64px; display: grid; gap: 20px; }
+@media (min-width: 720px) { .wrap { padding-inline: 28px; } }
+
+h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(1.7rem, 1.1rem + 2.4vw, 2.7rem); font-weight: 800; font-stretch: 78%; letter-spacing: -.01em; line-height: 1.05; }
+h2 { font-size: 1.12rem; font-weight: 750; font-stretch: 90%; }
+h3 { font-size: .98rem; font-weight: 700; }
+p { margin: 0; }
+.eyebrow { font-size: .72rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.num, .mono { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+.muted { color: var(--muted); }
+.small { font-size: .84rem; }
+.nowrap { white-space: nowrap; }
+
+/* cabecera */
+.mast { display: grid; gap: 12px; padding-block: 6px 2px; }
+.mast .lead { max-width: 72ch; color: var(--muted); font-size: 1rem; }
+.facts { display: flex; flex-wrap: wrap; gap: 8px; }
+.fact { display: inline-flex; align-items: baseline; gap: 6px; border: 1px solid var(--line); background: var(--sheet); border-radius: 999px; padding: 4px 12px; font-size: .84rem; }
+.fact b { font-family: var(--f-mono); font-weight: 600; }
+
+/* barra de control */
+.toolbar { display: flex; flex-wrap: wrap; align-items: end; gap: 12px 16px; background: var(--sheet); border: 1px solid var(--line); border-radius: var(--r); padding: 14px 16px; box-shadow: var(--shadow); }
+.toolbar .grow { flex: 1 1 auto; }
+label.field { display: grid; gap: 4px; font-size: .76rem; color: var(--muted); font-weight: 650; letter-spacing: .02em; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.seg button { border: 0; border-radius: 0; padding: 7px 12px; background: var(--sheet); }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--sheet); }
+
+.grid { display: grid; gap: 20px; grid-template-columns: minmax(0, 1fr); align-items: start; }
+@media (min-width: 1080px) { .grid { grid-template-columns: minmax(0, 11fr) minmax(0, 12fr); } }
+
+.panel { background: var(--sheet); border: 1px solid var(--line); border-radius: var(--r); box-shadow: var(--shadow); min-width: 0; }
+.panel > header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding: 14px 16px; border-bottom: 1px solid var(--line-soft); }
+.panel > .body { padding: 16px; display: grid; gap: 14px; min-width: 0; }
+
+/* controles */
+button { font: inherit; font-size: .86rem; font-weight: 600; border-radius: 8px; border: 1px solid var(--line); background: var(--sheet); color: var(--ink); padding: 7px 12px; cursor: pointer; line-height: 1.2; }
+button:hover { border-color: var(--accent); }
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+button.danger { color: var(--bad); }
+button.danger.armed { background: var(--bad); border-color: var(--bad); color: #fff; }
+button:disabled { opacity: .5; cursor: not-allowed; }
+button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.btnrow { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+input, select, textarea { font: inherit; color: var(--ink); background: var(--sheet); border: 1px solid var(--line); border-radius: 7px; padding: 6px 8px; min-width: 0; }
+input.v { font-family: var(--f-mono); font-variant-numeric: tabular-nums; text-align: right; width: 112px; }
+input.short { width: 92px; }
+textarea { width: 100%; font-family: var(--f-mono); font-size: .84rem; min-height: 110px; resize: vertical; }
+
+/* tablas */
+.tscroll { overflow-x: auto; min-width: 0; border: 1px solid var(--line-soft); border-radius: 8px; }
+table { border-collapse: collapse; width: 100%; font-size: .9rem; }
+th, td { padding: 6px 9px; border-bottom: 1px solid var(--line-soft); text-align: left; vertical-align: middle; }
+th { font-size: .7rem; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 650; background: var(--paper); white-space: nowrap; }
+tbody tr:last-child td { border-bottom: 0; }
+td.r, th.r { text-align: right; }
+td.c, th.c { text-align: center; }
+tfoot td { background: var(--paper); font-weight: 650; }
+tr.is-tit td { background: color-mix(in srgb, var(--accent-soft) 70%, transparent); }
+
+/* chips de lista con colores oficiales del TSJE */
+.chip { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; font-size: .78rem; border-radius: 6px; padding: 2px 7px; border: 1px solid rgba(0,0,0,.18); white-space: nowrap; font-family: var(--f-mono); }
+.ltabs { display: flex; flex-wrap: wrap; gap: 6px; }
+.ltab { display: grid; gap: 2px; text-align: left; padding: 6px 9px; min-width: 92px; }
+.ltab .t { font-family: var(--f-mono); font-size: .78rem; color: var(--muted); font-weight: 500; }
+.ltab[aria-selected="true"] { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+
+/* resultados */
+.hemi-wrap { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 640px) { .hemi-wrap { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); align-items: center; } }
+.hemi svg { width: 100%; height: auto; display: block; max-width: 520px; margin: 0 auto; }
+.legend-list { display: grid; gap: 6px; }
+.legend-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px; align-items: center; }
+.legend-row .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .9rem; }
+.legend-row .seats { font-family: var(--f-mono); font-weight: 600; font-size: 1.05rem; }
+
+.alerts { display: grid; gap: 8px; }
+.alert { border-radius: 8px; padding: 10px 12px; font-size: .9rem; display: grid; gap: 8px; }
+.alert.warn { background: var(--warn-bg); color: var(--warn); }
+.alert.bad { background: var(--bad-bg); color: var(--bad); }
+.alert.ok { background: var(--ok-bg); color: var(--ok); }
+.alert.info { background: var(--accent-soft); color: var(--accent); }
+.alert b { font-weight: 750; }
+.alert button { font-size: .8rem; }
+
+.pill { display: inline-block; font-size: .7rem; font-weight: 700; letter-spacing: .03em; padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
+.pill.tit { background: var(--accent); color: var(--accent-ink); }
+.pill.no { background: var(--line-soft); color: var(--muted); }
+.mv-up { color: var(--ok); font-weight: 650; }
+.mv-dn { color: var(--muted); }
+
+/* cocientes */
+.qtable th:first-child, .qtable td:first-child { position: sticky; left: 0; background: var(--sheet); z-index: 1; }
+.qtable th:first-child { background: var(--paper); }
+.qtable td.q { font-family: var(--f-mono); font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; font-size: .8rem; color: var(--muted); }
+.qtable td.win { background: var(--mark); color: var(--mark-ink); font-weight: 600; }
+.qtable td.tie { outline: 2px dashed var(--bad); outline-offset: -3px; color: var(--bad); font-weight: 600; }
+.qtable td.next { box-shadow: inset 0 0 0 2px var(--accent); color: var(--accent); font-weight: 600; }
+.qtable td sup { font-size: .62rem; margin-left: 3px; opacity: .8; }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: .8rem; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 16px; height: 12px; border-radius: 3px; display: inline-block; }
+
+/* base legal */
+.legal { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 900px) { .legal { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.rule { border-left: 3px solid var(--ok); padding: 2px 0 2px 12px; display: grid; gap: 4px; max-width: 72ch; }
+.rule p { font-size: .92rem; }
+.rule .src { font-size: .78rem; color: var(--muted); word-break: break-word; }
+.rule a, .foot a { color: var(--accent); }
+details > summary { cursor: pointer; font-weight: 650; }
+details[open] > summary { margin-bottom: 10px; }
+.banner { background: var(--warn); color: var(--sheet); border-radius: 8px; padding: 8px 12px; font-weight: 650; font-size: .9rem; }
+.empty { border: 1px dashed var(--line); border-radius: 8px; padding: 14px; color: var(--muted); font-size: .92rem; }
+.toast { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--sheet); padding: 8px 14px; border-radius: 8px; font-size: .9rem; z-index: 10; max-width: calc(100vw - 32px); }
+footer.foot { color: var(--muted); font-size: .8rem; max-width: 100ch; display: grid; gap: 6px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+[hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="mast">
+    <p class="eyebrow">Elecciones municipales · 4 de octubre de 2026 · Asunción</p>
+    <h1>Reparto de bancas de la Junta Municipal de Asunción</h1>
+    <p class="lead">24 concejales titulares por sistema D'Hondt con listas cerradas y desbloqueadas. El total de cada lista es la suma de los votos preferenciales de sus candidatos; dentro de cada lista entran los más votados.</p>
+    <div class="facts">
+      <span class="fact"><b>24</b> titulares + <b>24</b> suplentes</span>
+      <span class="fact">Divisores <b>1 a 24</b></span>
+      <span class="fact">Sin umbral mínimo</span>
+      <span class="fact">Voto preferencial obligatorio: <b>1</b> candidato</span>
+      <span class="fact"><b>9</b> listas · <b>216</b> candidatos</span>
+    </div>
+  </header>
+
+  <div class="toolbar">
+    <label class="field">Escenario
+      <select id="sel-esc">
+        <option value="2026">Municipales 2026 · 9 listas oficiales</option>
+        <option value="2021">Verificación · Junta 2021 (resultados oficiales TSJE)</option>
+      </select>
+    </label>
+    <div class="field" role="group" aria-labelledby="lbl-modo">
+      <span id="lbl-modo">Forma de carga</span>
+      <div class="seg">
+        <button type="button" id="m-pref" aria-pressed="true">Por candidato</button>
+        <button type="button" id="m-tot" aria-pressed="false">Solo totales por lista</button>
+      </div>
+    </div>
+    <label class="field" for="p-blancos">Votos en blanco
+      <input id="p-blancos" class="v short" type="text" inputmode="numeric" value="0">
+    </label>
+    <label class="field" for="p-nulos">Votos nulos
+      <input id="p-nulos" class="v short" type="text" inputmode="numeric" value="0">
+    </label>
+    <label class="field" for="p-bancas">Bancas
+      <input id="p-bancas" class="v short" type="number" min="1" max="99" step="1" value="24">
+    </label>
+    <span class="grow"></span>
+    <div class="btnrow">
+      <button type="button" id="btn-copiar">Copiar resultado</button>
+      <button type="button" id="btn-sim">Simular votos al azar</button>
+      <button type="button" id="btn-borrar" class="danger">Borrar votos</button>
+    </div>
+  </div>
+
+  <div id="banner" class="banner" hidden>Simulación con números al azar. No son resultados reales.</div>
+
+  <div class="grid">
+    <!-- CARGA -->
+    <section class="panel" aria-labelledby="h-carga">
+      <header>
+        <h2 id="h-carga">Carga de votos</h2>
+        <span class="small muted" id="carga-sub"></span>
+      </header>
+      <div class="body" id="carga"></div>
+    </section>
+
+    <!-- RESULTADO -->
+    <section class="panel" aria-labelledby="h-res">
+      <header>
+        <h2 id="h-res">Resultado</h2>
+        <span class="small muted num" id="res-sub"></span>
+      </header>
+      <div class="body">
+        <div class="alerts" id="alerts"></div>
+        <div class="hemi-wrap">
+          <div class="hemi" id="hemi"></div>
+          <div class="legend-list" id="legend"></div>
+        </div>
+        <div class="tscroll">
+          <table aria-label="Resumen por lista">
+            <thead><tr><th>Lista</th><th class="r">Votos</th><th class="r">% válidos</th><th class="r">Bancas</th><th class="r">Para 1 banca más</th><th class="r">Colchón</th></tr></thead>
+            <tbody id="tb-resumen"></tbody>
+            <tfoot id="tf-resumen"></tfoot>
+          </table>
+        </div>
+        <p class="small muted">“Para 1 banca más”: votos que la lista necesitaría sumar para quitarle la última banca a otra lista, si el resto no cambia. “Colchón”: votos que podría perder antes de ceder una banca.</p>
+      </div>
+    </section>
+  </div>
+
+  <!-- ELECTOS -->
+  <section class="panel" aria-labelledby="h-electos">
+    <header>
+      <h2 id="h-electos">Concejales titulares electos</h2>
+      <span class="small muted">En el orden en que el D'Hondt asigna cada banca</span>
+    </header>
+    <div class="body" id="electos"></div>
+  </section>
+
+  <!-- COCIENTES -->
+  <section class="panel" aria-labelledby="h-coc">
+    <header>
+      <h2 id="h-coc">Tabla de cocientes D'Hondt</h2>
+      <div class="legend">
+        <span><i style="background:var(--mark)"></i>Obtiene banca (n.º = orden de asignación)</span>
+        <span><i style="box-shadow:inset 0 0 0 2px var(--accent)"></i>Primer cociente sin banca</span>
+        <span><i style="outline:2px dashed var(--bad);outline-offset:-3px"></i>Empate en la última banca</span>
+      </div>
+    </header>
+    <div class="body">
+      <div class="tscroll"><table class="qtable" id="qtable" aria-label="Cocientes"></table></div>
+    </div>
+  </section>
+
+  <!-- BASE LEGAL -->
+  <section class="panel" aria-labelledby="h-legal">
+    <header><h2 id="h-legal">Reglas que aplica el cálculo</h2></header>
+    <div class="body">
+      <div class="legal">
+        <div class="rule"><h3>1. Cantidad de bancas</h3><p>La Junta Municipal de Asunción tiene 24 concejales titulares y se elige el mismo número de suplentes.</p><p class="src">Ley 3966/2010 Orgánica Municipal, art. 24.</p></div>
+        <div class="rule"><h3>2. Votos de cada lista</h3><p>Cada elector vota a un solo candidato dentro de una lista (la máquina exige exactamente una preferencia). El total de la lista es la suma de los votos preferenciales de todos sus candidatos. Los votos en blanco y nulos no entran en el reparto.</p><p class="src">Código Electoral (Ley 834/96), art. 258, texto de la Ley 6918/2022 (antes Ley 6318/2019). Datos del simulador oficial TSJE: <span class="mono">min_preferencias = max_preferencias = 1</span>.</p></div>
+        <div class="rule"><h3>3. Reparto entre listas (D'Hondt)</h3><p>Los votos de cada lista se dividen por 1, 2, 3… hasta 24. Las 24 bancas van a los 24 cocientes más altos, de mayor a menor. No hay umbral mínimo. La comparación de cocientes se hace con aritmética entera exacta (<span class="mono">BigInt</span>, productos cruzados), sin redondeos.</p><p class="src">Art. 258 incisos a), b) y c).</p></div>
+        <div class="rule"><h3>4. Empate entre listas</h3><p>Si dos cocientes de listas distintas empatan por la última banca, la banca va a la lista con más votos totales. Si también empatan en votos, se resuelve por sorteo; la página te pide indicar quién lo ganó.</p><p class="src">Art. 258 inciso d).</p></div>
+        <div class="rule"><h3>5. Quiénes ocupan las bancas</h3><p>Dentro de cada lista, los candidatos se reordenan por votos preferenciales de mayor a menor. Si una lista gana N bancas, entran sus N candidatos más votados. Si dos candidatos de la misma lista empatan, se respeta el orden original de la lista. Si no alcanzan los candidatos con votos, se completa con el orden original.</p><p class="src">Art. 258, párrafos sobre el voto preferencial.</p></div>
+        <div class="rule"><h3>6. Suplentes</h3><p>Los suplentes no se reordenan: cada lista que gana N bancas recibe sus primeros N suplentes en el orden en que el partido los inscribió. La boleta electrónica solo muestra titulares, por eso esta página no tiene los nombres de los suplentes.</p><p class="src">Art. 258 (cláusula de suplentes). Verificado con la proclamación de Asunción 2021 (datos abiertos TSJE).</p></div>
+      </div>
+      <details>
+        <summary>Cómo pegar datos en bloque</summary>
+        <div class="small" style="display:grid;gap:8px;max-width:80ch">
+          <p><b>Una lista:</b> en “Carga de votos”, abrí “Pegar votos de esta lista” y pegá 24 números en el orden de la lista (uno por línea o una columna copiada de Excel). Acepta separadores de miles con punto.</p>
+          <p><b>Todas las listas:</b> en “Pegar todo” usá una línea por candidato con <span class="mono">lista; orden; votos</span> (por ejemplo <span class="mono">1;1;14189</span>). En modo “Solo totales” usá <span class="mono">lista; votos</span>.</p>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <p>Listas y candidatos: datos oficiales del simulador de votación del TSJE para Asunción (<a href="https://simuladoroficial.tsje.gov.py/sufragio.html?ubicacion=59.0.0" target="_blank" rel="noopener">simuladoroficial.tsje.gov.py</a>, archivos <span class="mono">Agrupaciones.json</span> y <span class="mono">Candidaturas.json</span>). Colores de lista según esos mismos archivos.</p>
+    <p>Verificación 2021: datos abiertos del TSJE en <a href="https://www.datos.gov.py/dataset/resultados-de-las-elecciones-municipales-y-generales-1996" target="_blank" rel="noopener">datos.gov.py</a>. Con 24 bancas, el cálculo reproduce el resultado oficial (ANR 15, PLRA 5, PPQ 3, Encuentro Ciudadano 1) y el orden de asignación banca por banca.</p>
+    <p>Esta herramienta calcula; la adjudicación oficial la hace la Justicia Electoral tras el juzgamiento de actas (cómputo del 5 al 23 de octubre de 2026).</p>
+  </footer>
+</div>
+
+<script>
+"use strict";
+/* ===================== DATOS OFICIALES ===================== */
+// Fuente: simuladoroficial.tsje.gov.py/datos/59.0.0/ (Agrupaciones.json + Candidaturas.json), categoría JUN.
+// Candidatos en orden original de la lista (nro_orden 1..24).
+const LISTAS_2026 = [
+  { codigo: "5", numero: "1", nombre: "PARTIDO COLORADO", sigla: "ANR", color: "#ff0000", texto: "#ffffff",
+    cands: ["GERARDO “GRINGO” BENITEZ","MIGUEL SOSA","SEBA RADICE","NASSER ESGAIB","“EL ARKI” SOTOMAYOR","JOSE PLATE","IVAN CHILAVERT","MARCE CENTURION","CERES ESCOBAR","DANI FERNANDEZ","CARLOS MOREL","TINO AYALA","“PIRIKI” RODRIGUEZ","JESUS LARA","HUGO RAMIREZ","MARIANO CACERES","CYNTHIA ROMERO","GABRIEL CALONGA","AXEL MONGELOS","OSCAR NOLDIN","KARINA ACUÑA","ENRIQUE WAGENER","JAVIER PINTOS","ARTURO TUKI ALMIRON"] },
+  { codigo: "6", numero: "2", nombre: "PARTIDO LIBERAL RADICAL AUTENTICO", sigla: "PLRA", color: "#002bc7", texto: "#ffffff",
+    cands: ["AUGUSTO WAGNER","RAMON ORTIZ","CHRISTIAN BAREIRO","FIORELLA FORESTIERI “YO CONFIO”","HUMBERTO BLASCO","ARIEL ANDINO","TANCREDO LUIS CENTURION","CARINA BENITEZ YEGROS","SEBA JAEGGLI","COCO GONZALEZ","MARIA JOSE MIRANDA","ARQ. CARLOS E. RUIZ SCHAERER","CECILIA VARGAS PEÑA","MAITO VARGAS","NERY VELAZQUEZ","FATIMA GOMEZ","MARIA CRISTINA BENITEZ","ROGELIO BARROS","YESICA SAGUIER","NITO SANTA CRUZ","LUIS FRETES","HENRY NELSON CAÑETE FERNANDEZ","JUAN FRANCISCO BENITEZ RIVAS","JUAN JARA"] },
+  { codigo: "7", numero: "3", nombre: "ALIANZA UNIDOS POR ASUNCION", sigla: "AUA", color: "#0c9b27", texto: "#ffffff",
+    cands: ["SEBAS GARAY PQ","NOELIA DIAZ","MAURI MALUFF","GUSTAVO RODRIGUEZ","ROSA VACCHETTA","DR. CELINO FERREIRA S.","ALVARO GRAU PQ","GLADIS FISCHER","JORGE RAMOS “DOCTOR FRANCIA”","JOSEFINA DUARTE","OTI SANCHEZ","JULIO VILLALBA CAVE","PABLO CALLIZO","FABI MONTIEL KLEINER","MAXI SEIFERHELD “LEVANTA ESCUELAS”","CORA ARBO","“TU BUEN AMIGO” BRUNO","ING AGR CARMEN “TATE” CUBAS","JAZMIN GALEANO SAPENA PQ","INGRID NOGUERA","DANI RODRIGUEZ","ING GLADYS CANESE","PEDRO MAYOR","MAGIN LOPEZ “GESTION Y CONTROL”"] },
+  { codigo: "8", numero: "6", nombre: "PARTIDO DEMOCRATA CRISTIANO", sigla: "PDC", color: "#ffffff", texto: "#000000",
+    cands: ["HUGO LOPEZ","TADEO ZARRATEA DAVALOS","MARIA LUISA BELLO","RODRIGO SEBASTIAN ARELLANO MOREIRA","JOSE “PUMA” RODRIGUEZ","FERNANDO “FERGO” GAMARRA","CAP R LETIZIA RAMIREZ PAREDES","LIC. AMI LOMBARDO","CLAUDIO “MORSA” GONZALEZ","DIXON BUTTERWORTH KENNEDY","JORGE ANTONIO PRADO ESQUIVEL","CARLOS ENRIQUE BAREIRO DUARTE","ALFREDO RAUL NOGUERA VARGAS","TOMAS FABIAN PLATE FRANCO","ANDRES MIGUEL RUIZ DIAZ ARECO","ADA LISSI ARRIOLA ALCARAZ","JOSE LUIS FONTCLARA FERNANDEZ","VICTORIA JARA HEYN","NELSON CASTRO","NORMA REINA ISABEL RIOS","JORGE DANIEL CHAVEZ QUIÑONEZ","LINO ANDRES AVILA ORTEGA","CARLOS FERREIRA","CRISTIAN DAVID SAMANIEGO NUÑEZ"] },
+  { codigo: "9", numero: "7", nombre: "PARTIDO UNION NACIONAL DE CIUDADANOS ETICOS", sigla: "UNACE", color: "#517a00", texto: "#ffffff",
+    cands: ["ALBERTO NUÑEZ ISASI","ALFREDO EFRAIN ESQUIVEL","FERNANDO CENTURION","MIRTHA ARACELI ORTIZ BENITEZ","SAMU ALVAREZ","RAFAELA BEATRIZ VELAZQUEZ","GUSTAVO ADOLFO CLOSA BENITEZ","JOSE DEL ROSARIO ORTELLADO FRANCO","VICTOR HUGO SANCHEZ ACOSTA","MIGUEL GUSTAVO PORTILLO ORUE","LEONARDO OJEDA","EDITH FRANCO DE SARDI","ALBERTO DA SILVA","ALBERTO GEREMIAS BORDON","HUGO ENRIQUE STANLEY PERSON","MIRNA CONCEPCION PAREDES","THAMARA GISEL MATTO","OSCAR FABIAN RODRIGUEZ","ANA MARIA QUINTANA","ABRAHAN GARCIA INSAURRALDE","GLADIS PAOLA ESPINOLA OTAZU","HUGO DANIEL LONCHARICH BASUALDO","JOSE ANTONIO CABRERA MIÑARRO","LUCIANO ANTONIO BENITEZ GONZALEZ"] },
+  { codigo: "10", numero: "10", nombre: "ALIANZA SOCIALISTA UNIDA ASU", sigla: "ASU", color: "#644aaf", texto: "#ffffff",
+    cands: ["MARIA DENIS","JESSI ARIAS","MANU GERDING","PACHIN CENTURION","HAIDEE ROMERO","IVAN ISASI","MALU VAZQUEZ","LIZ OSORIO","JUANI CASURIAGA","HECTOR OTAZU","SUSANA BARRETO","ROSA MIRANDA","CESAR GONZALEZ PARINI","OSCAR HERREROS USHER","JORGE ENRIQUE AYALA","NATHALIA CORREA","SAMUEL VERA","ALHELI GONZALEZ CACERES","BETO DUNJO","MARIA CONCEPCION CANDIA","CARLOS PORTILLO","YOLANDA MUJICA","PAOLA ACOSTA DENIS","ORLANDO MAIDANA"] },
+  { codigo: "11", numero: "16", nombre: "PARTIDO PATRIOTAS INDEPENDIENTES", sigla: "PPI", color: "#98add4", texto: "#000000",
+    cands: ["EVER RAMON RECALDE BAREIRO","GUILLERMO BAE KIM","ROSA MARIA PALACIOS DE PAREDES","ANGEL MARIA FERREIRA","OSCAR MOREIRA LACASA","ADOLFO JOSE ZACARIAS BUCCINI","ROBERTO VICENTE MERELES MARTINEZ","MARIA ELENA SUGASTI VILLAMAYOR","DANY CHUNG","PABLO EDUARDO QUIROZ","VICTOR MANUEL GOMEZ ORTIZ","RODRIGO ALBERTO PEREIRA PENAYO","SANTIAGO CORONEL SANCHEZ","FATIMA MARIA VEGA ARZAMENDIA","JUAN ULISES VILLALBA DAVALOS","SANTIAGO GAMARRA DELGADO","JUSTINA FRETES DE CHILAVERT","FRANCISCO VALDEZ SOSA","ODILIO ARMANDO BRITEZ ALVAREZ","FELIPE SANTIAGO GOMEZ","GERARDO JAVIER JARA VARELA","CESAR ANDRES CACERES CARDOZO","ISAAC RAMON CABRERA IRIGOYEN","FLORENCIO PEREZ OTAZU"] },
+  { codigo: "12", numero: "21", nombre: "PARTIDO DE LA JUVENTUD FUERZA JOVEN", sigla: "PJFJ", color: "#d8ff40", texto: "#000000",
+    cands: ["DIGNA PERLA CONCEPCION MALDONADO DIAZ","RAUL MELAMED","OSCAR FERNANDO OVELAR OLMEDO","IRENEO ROMAN","TOMAS TORRES","MARTITA","SUSI SACCO","VICTORIA JULIANA THOMPSON GOMEZ","NINFA RAMONA VIVEROS LEGUIZAMON","ANA FELIPA MALDONADO DIAZ","PEDRO ARIEL MARTINEZ","TOMAS EUBLO ALVARENGA SAMANIEGO","MARY","UBALDO SALVADOR ROA GODOY","AGUSTIN","ESTELA MARI MARTINEZ CACERES","JOEL PEREIRA","DYLAN GABRIEL VERA SAMANIEGO","LUIS ALBERTO PACHAS MEDRANO","SANDRA CAROLINA SUAREZ MENDOZA","LUISA BEATRIZ KREITMAYR DE MIÑO","CARLOS VILLANUEVA CALZADILLA","ALFREDO MARTINEZ CACERES","LUIS IGNACIO DIAZ MENDOZA"] },
+  { codigo: "13", numero: "300", nombre: "PARTIDO PATRIA SOÑADA", sigla: "PS", color: "#b9cdbe", texto: "#000000",
+    cands: ["CLAUDIA AQUINO","SILVIA AQUINO","HECTOR ELIZECHE","CAROL DORIA MOREL","LIDER BEBU FLEITAS","SUSANA MERELES","JOHN WENTZENSEN","BETHA CUBILLA","JOSE BENITEZ","LIZ MAQUEDA","LIZ DELGADO","XIMENA LEON","TANA ZARATE","CARLITO ACUÑA","CRISTINO VEGA LEIVA","CATHIA CENTURION","NATHAN OLAVARRIETA","GLORIA RIVAS","ARNOLD GOOSSEN","JUDITH GALEANO","JUAN ANGEL BOVEDA","LIZ VILLAGRA","CARLOS URBIETA","MENCHI SALDIVAR"] }
+];
+
+// Junta Municipal de Asunción 2021, resultados oficiales TSJE (datos.gov.py). Oficial: ANR 15, PLRA 5, PPQ 3, EC 1.
+const VERIF_2021 = {
+  blancos: 9651, nulos: 1072,
+  listas: [
+    ["1","ANR","PARTIDO COLORADO",126005,15,"#ff0000","#ffffff"],
+    ["2","PLRA","PARTIDO LIBERAL RADICAL AUTENTICO",40021,5,"#002bc7","#ffffff"],
+    ["3","PRF","PARTIDO REVOLUCIONARIO FEBRERISTA",5886,0,"#c2185b","#ffffff"],
+    ["4","APT","ALIANZA ASUNCION PARA TODOS",7160,0,"#ff8f00","#000000"],
+    ["6","EC","ALIANZA ENCUENTRO CIUDADANO",10019,1,"#00897b","#ffffff"],
+    ["7","UNACE","PARTIDO UNION NACIONAL DE CIUDADANOS ETICOS",2434,0,"#517a00","#ffffff"],
+    ["8","PPQ","PARTIDO PATRIA QUERIDA",27955,3,"#29b6f6","#000000"],
+    ["10","MAV","MOV ACCION VECINAL",1989,0,"#8d6e63","#ffffff"],
+    ["12","PFA","PARTIDO FRENTE AMPLIO",907,0,"#6d4c41","#ffffff"],
+    ["14","MIRI","MOV INDEP INTEGRACION Y RENOVACION INSTITUCIONAL",1379,0,"#78909c","#ffffff"],
+    ["15","PNU","PARTIDO NACIONAL UNAMONOS",2348,0,"#5c6bc0","#ffffff"],
+    ["20","PPH","PARTIDO HAGAMOS",6670,0,"#7e57c2","#ffffff"],
+    ["21","PJ","PARTIDO DE LA JUVENTUD",1846,0,"#d8ff40","#000000"],
+    ["22","HOYCO","MOV HONESTIDAD Y CORAJE",766,0,"#90a4ae","#000000"],
+    ["30","PNG30A","PARTIDO NACIONAL DE LA GENTE 30A",1138,0,"#a1887f","#000000"],
+    ["40","CNFG","CONCERTACION NACIONAL FRENTE GUASU",1905,0,"#e53935","#ffffff"],
+    ["50","PMPP","PARTIDO DEL MOV PATRIOTICO POPULAR",616,0,"#bcaaa4","#000000"],
+    ["70","PCP","PARTIDO COMUNISTA PARAGUAYO",722,0,"#b71c1c","#ffffff"],
+    ["77","MUTPY","MOV UNIDOS TODOS POR PARAGUAY",749,0,"#9e9d24","#ffffff"],
+    ["100","PDP","PARTIDO DEMOCRATICO PROGRESISTA",3520,0,"#f06292","#000000"],
+    ["500","PDA","PARTIDO DE LA A",385,0,"#4db6ac","#000000"],
+    ["555","MPC","MOV CREO EN VOS ASUNCION MI CIUDAD",535,0,"#ba68c8","#000000"],
+    ["999","PCN","PARTIDO CRUZADA NACIONAL",1889,0,"#ffca28","#000000"]
+  ]
+};
+
+/* ===================== MOTOR ===================== */
+// Cocientes como fracciones v/d; comparación exacta con BigInt (productos cruzados).
+const Engine = (() => {
+  const B = BigInt;
+  const cmpQ = (a, b) => { const x = B(a.v) * B(b.d), y = B(b.v) * B(a.d); return x < y ? -1 : x > y ? 1 : 0; };
+
+  /**
+   * entradas: [{v: votos enteros >= 0, max: tope de bancas (cantidad de candidatos)}]
+   * sorteo: índices de listas en el orden en que ganaron el sorteo (art. 258 d), si hubo empate total)
+   */
+  function asignar(entradas, bancas, sorteo) {
+    const q = [];
+    entradas.forEach((e, i) => {
+      if (!(e.v > 0)) return;
+      const tope = Math.min(bancas, e.max == null ? bancas : e.max);
+      for (let d = 1; d <= tope; d++) q.push({ i, d, v: e.v });
+    });
+    // mayor cociente primero; a igual cociente, más votos totales (art. 258 d); luego índice (provisorio)
+    q.sort((a, b) => cmpQ(b, a) || (b.v - a.v) || (a.i - b.i));
+
+    const ganadores = [];
+    let empate = null;
+    let k = 0;
+    while (ganadores.length < bancas && k < q.length) {
+      let j = k;
+      while (j + 1 < q.length && cmpQ(q[j + 1], q[k]) === 0) j++;
+      const grupo = q.slice(k, j + 1);
+      const libres = bancas - ganadores.length;
+      if (grupo.length <= libres) {
+        ganadores.push(...grupo);
+      } else {
+        // Empate de cocientes que cruza la última banca. 1º: más votos totales. 2º: sorteo.
+        const corteV = grupo[libres - 1].v;
+        const totalEmpate = grupo[libres].v === corteV; // mismos votos a ambos lados del corte
+        let orden = grupo.slice();
+        let disputadas = 0, sorteoIds = [], resuelto = true;
+        if (totalEmpate) {
+          sorteoIds = grupo.filter(g => g.v === corteV).map(g => g.i);
+          const antes = grupo.filter(g => g.v > corteV).length;
+          disputadas = libres - antes;
+          const picks = (sorteo || []).filter(i => sorteoIds.includes(i));
+          resuelto = picks.length >= disputadas;
+          const pos = i => { const p = picks.indexOf(i); return p < 0 ? 1e9 + i : p; };
+          orden.sort((a, b) => (b.v - a.v) || (pos(a.i) - pos(b.i)));
+        }
+        const elegidos = orden.slice(0, libres);
+        if (totalEmpate && !resuelto) elegidos.forEach(g => { if (g.v === corteV) g.disputa = true; });
+        ganadores.push(...elegidos);
+        empate = {
+          v: grupo[0].v, d: grupo[0].d, grupo: grupo.map(g => g.i), libres,
+          porVotos: !totalEmpate, sorteoIds, disputadas, resuelto,
+          ganadores: elegidos.map(g => g.i),
+        };
+      }
+      k = j + 1;
+    }
+    ganadores.forEach((g, n) => { g.orden = n + 1; });
+    const bancasLista = entradas.map(() => 0);
+    ganadores.forEach(g => bancasLista[g.i]++);
+    const ganSet = new Set(ganadores.map(g => g.i + ":" + g.d));
+    const siguiente = q.find(x => !ganSet.has(x.i + ":" + x.d)) || null;
+
+    const analisis = entradas.map((e, i) => {
+      const v = e.v || 0, s = bancasLista[i];
+      const tope = e.max == null ? bancas : e.max;
+      let faltan = null;
+      if (s < tope && s < bancas) {
+        let low = null;
+        for (let n = ganadores.length - 1; n >= 0; n--) if (ganadores[n].i !== i) { low = ganadores[n]; break; }
+        if (low) {
+          const need = B(low.v) * B(s + 1) / B(low.d) + 1n; // estrictamente mayor
+          const f = Number(need) - v;
+          faltan = { votos: Math.max(0, f), contra: low.i };
+        }
+      }
+      let colchon = null;
+      if (s > 0) {
+        let best = null;
+        entradas.forEach((m, j) => {
+          if (j === i || !(m.v > 0)) return;
+          const tj = m.max == null ? bancas : m.max;
+          if (bancasLista[j] >= tj) return;
+          const c = { v: m.v, d: bancasLista[j] + 1, i: j };
+          if (!best || cmpQ(c, best) > 0) best = c;
+        });
+        if (best) {
+          const min = B(best.v) * B(s) / B(best.d) + 1n;
+          colchon = { votos: v - Number(min), contra: best.i };
+        }
+      }
+      return { faltan, colchon };
+    });
+    return { q, ganadores, bancas: bancasLista, empate, siguiente, analisis };
+  }
+
+  // Art. 258: orden por votos preferenciales (mayor a menor); empate -> orden original de la lista.
+  function reordenar(cands) {
+    return cands
+      .map((c, n) => ({ nombre: c.nombre, pref: c.pref || 0, original: n + 1 }))
+      .sort((a, b) => (b.pref - a.pref) || (a.original - b.original))
+      .map((c, n) => ({ ...c, final: n + 1 }));
+  }
+
+  return { asignar, reordenar, cmpQ };
+})();
+
+/* ===================== ESTADO ===================== */
+const KEY = "bancas-junta-asu-2026-v1";
+const nuevo2026 = () => ({
+  esc: "2026", modo: "pref", bancas: 24, blancos: 0, nulos: 0, simulado: false, sorteo: [], sorteoKey: "",
+  sel: LISTAS_2026[0].numero,
+  listas: LISTAS_2026.map(l => ({ numero: l.numero, sigla: l.sigla, nombre: l.nombre, color: l.color, texto: l.texto,
+    total: 0, cands: l.cands.map(n => ({ nombre: n, pref: 0 })) })),
+});
+const nuevo2021 = () => ({
+  esc: "2021", modo: "tot", bancas: 24, blancos: VERIF_2021.blancos, nulos: VERIF_2021.nulos, simulado: false, sorteo: [], sorteoKey: "",
+  sel: "1",
+  listas: VERIF_2021.listas.map(([numero, sigla, nombre, votos, oficial, color, texto]) =>
+    ({ numero, sigla, nombre, color, texto, total: votos, oficial, cands: [] })),
+});
+
+let S2026 = nuevo2026();
+try {
+  const raw = localStorage.getItem(KEY);
+  if (raw) {
+    const g = JSON.parse(raw);
+    if (g && Array.isArray(g.listas)) {
+      Object.assign(S2026, { modo: g.modo === "tot" ? "tot" : "pref", bancas: g.bancas || 24, blancos: g.blancos || 0, nulos: g.nulos || 0, simulado: !!g.simulado, sel: g.sel || S2026.sel, sorteo: g.sorteo || [], sorteoKey: g.sorteoKey || "" });
+      g.listas.forEach(gl => {
+        const l = S2026.listas.find(x => x.numero === gl.numero);
+        if (!l) return;
+        l.total = toInt(gl.total);
+        (gl.prefs || []).forEach((p, n) => { if (l.cands[n]) l.cands[n].pref = toInt(p); });
+      });
+    }
+  }
+} catch (e) { /* sin almacenamiento: se trabaja en memoria */ }
+let S = S2026;
+
+function guardar() {
+  if (S.esc !== "2026") return;
+  try {
+    localStorage.setItem(KEY, JSON.stringify({
+      modo: S.modo, bancas: S.bancas, blancos: S.blancos, nulos: S.nulos, simulado: S.simulado, sel: S.sel, sorteo: S.sorteo, sorteoKey: S.sorteoKey,
+      listas: S.listas.map(l => ({ numero: l.numero, total: l.total, prefs: l.cands.map(c => c.pref) })),
+    }));
+  } catch (e) { /* ignorar */ }
+}
+
+/* ===================== UTILIDADES ===================== */
+function toInt(x) {
+  if (typeof x === "number") return Number.isFinite(x) && x > 0 ? Math.floor(x) : 0;
+  const s = String(x == null ? "" : x).replace(/[^\d]/g, ""); // "14.189" -> 14189
+  if (!s) return 0;
+  const n = Number(s);
+  return Number.isSafeInteger(n) ? n : 0;
+}
+const fInt = new Intl.NumberFormat("es-PY", { maximumFractionDigits: 0 });
+const fDec = new Intl.NumberFormat("es-PY", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const fmt = n => fInt.format(n);
+const pct = (a, b) => b > 0 ? fDec.format((a * 100) / b) + " %" : "—";
+// cociente exacto con 2 decimales truncados (para mostrar; la comparación usa fracciones)
+function fmtQ(v, d) {
+  const ent = Math.floor(v / d), rem = v - ent * d;
+  const dec = Math.floor((rem * 100) / d);
+  return fInt.format(ent) + "," + String(dec).padStart(2, "0");
+}
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const $ = id => document.getElementById(id);
+const chip = l => `<span class="chip" style="background:${l.color};color:${l.texto}">${esc(l.numero)} · ${esc(l.sigla)}</span>`;
+function toast(msg) {
+  const t = document.createElement("div");
+  t.className = "toast"; t.setAttribute("role", "status"); t.textContent = msg;
+  document.body.appendChild(t); setTimeout(() => t.remove(), 2200);
+}
+const votosLista = l => S.modo === "pref" && l.cands.length ? l.cands.reduce((a, c) => a + c.pref, 0) : l.total;
+
+/* ===================== CÁLCULO ===================== */
+function calcular() {
+  const entradas = S.listas.map(l => ({ v: votosLista(l), max: l.cands.length || null }));
+  // el sorteo guardado solo vale para el mismo empate
+  let r = Engine.asignar(entradas, S.bancas, []);
+  const key = r.empate && !r.empate.porVotos ? JSON.stringify([r.empate.v, r.empate.d, r.empate.sorteoIds]) : "";
+  if (key && key === S.sorteoKey && S.sorteo.length) r = Engine.asignar(entradas, S.bancas, S.sorteo);
+  r.empateKey = key;
+  // bancas firmes: excluye las que esperan sorteo
+  r.firmes = r.bancas.slice();
+  r.ganadores.forEach(g => { if (g.disputa) r.firmes[g.i]--; });
+  r.validos = entradas.reduce((a, e) => a + e.v, 0);
+  r.entradas = entradas;
+  // titulares por lista: banca d de la lista -> candidato en posición d del orden preferencial
+  r.orden = S.listas.map(l => (S.modo === "pref" && l.cands.length) ? Engine.reordenar(l.cands) : null);
+  return r;
+}
+
+/* ===================== RENDER: CARGA ===================== */
+function renderCarga() {
+  const box = $("carga");
+  if (S.modo === "tot") {
+    $("carga-sub").textContent = S.esc === "2021" ? "Totales oficiales 2021 (editables)" : "Total de votos de cada lista";
+    box.innerHTML = `
+      ${S.esc === "2026" ? `<div class="alert info">En este modo se reparten bancas con los totales por lista. Para saber qué candidatos entran, cargá los votos por candidato.</div>` : ""}
+      <div class="tscroll"><table aria-label="Totales por lista">
+        <thead><tr><th>Lista</th><th>Nombre</th><th class="r">Votos</th></tr></thead>
+        <tbody>${S.listas.map((l, i) => `<tr><td>${chip(l)}</td><td class="small">${esc(l.nombre)}</td>
+          <td class="r"><input class="v" id="tot-${i}" data-tot="${i}" type="text" inputmode="numeric" value="${l.total ? fmt(l.total) : ""}" placeholder="0" aria-label="Votos lista ${esc(l.numero)}"></td></tr>`).join("")}</tbody>
+        <tfoot><tr><td colspan="2">Votos válidos para listas</td><td class="r num" id="tot-sum"></td></tr></tfoot>
+      </table></div>
+      ${pegarTodoHTML()}`;
+    actualizarSumas();
+    return;
+  }
+  $("carga-sub").textContent = "Votos preferenciales por candidato";
+  const idx = Math.max(0, S.listas.findIndex(l => l.numero === S.sel));
+  const l = S.listas[idx];
+  box.innerHTML = `
+    <div class="ltabs" role="tablist" aria-label="Listas">
+      ${S.listas.map((x, i) => `<button type="button" class="ltab" role="tab" id="tab-${i}" data-tab="${esc(x.numero)}" aria-selected="${i === idx}">
+        ${chip(x)}<span class="t" id="tabsum-${i}">${fmt(votosLista(x))}</span></button>`).join("")}
+    </div>
+    <div style="display:grid;gap:4px">
+      <h3>${esc(l.numero)} · ${esc(l.nombre)}</h3>
+      <p class="small muted">Orden original de la lista y votos preferenciales. La columna “Posición” es el orden después del desbloqueo.</p>
+    </div>
+    <div class="tscroll"><table class="cands" aria-label="Candidatos de la lista ${esc(l.numero)}">
+      <thead><tr><th class="r">Orden</th><th>Candidato</th><th class="r">Votos pref.</th><th class="r">Posición</th><th>Estado</th></tr></thead>
+      <tbody>${l.cands.map((c, n) => `<tr id="cr-${n}"><td class="r num">${n + 1}</td><td>${esc(c.nombre)}</td>
+        <td class="r"><input class="v" id="pv-${idx}-${n}" data-pv="${n}" type="text" inputmode="numeric" value="${c.pref ? fmt(c.pref) : ""}" placeholder="0" aria-label="Votos de ${esc(c.nombre)}"></td>
+        <td class="r num" id="pos-${n}"></td><td id="st-${n}"></td></tr>`).join("")}</tbody>
+      <tfoot><tr><td></td><td>Total de la lista (suma de preferenciales)</td><td class="r num" id="lsum"></td><td></td><td></td></tr></tfoot>
+    </table></div>
+    <details>
+      <summary>Pegar votos de esta lista</summary>
+      <div style="display:grid;gap:8px">
+        <label class="small muted" for="ta-lista">24 números en el orden de la lista (uno por línea o una columna de Excel).</label>
+        <textarea id="ta-lista" placeholder="14189&#10;14121&#10;8511&#10;…"></textarea>
+        <div class="btnrow"><button type="button" class="primary" id="btn-pegar-lista">Aplicar a la lista ${esc(l.numero)}</button></div>
+      </div>
+    </details>
+    ${pegarTodoHTML()}`;
+  actualizarSumas();
+}
+
+function pegarTodoHTML() {
+  const ej = S.modo === "tot" ? "1;126005&#10;2;40021" : "1;1;14189&#10;1;2;14121&#10;2;1;8357";
+  const fmtTxt = S.modo === "tot" ? "lista; votos" : "lista; orden; votos";
+  return `<details>
+      <summary>Pegar todo</summary>
+      <div style="display:grid;gap:8px">
+        <label class="small muted" for="ta-todo">Una línea por ${S.modo === "tot" ? "lista" : "candidato"}: <span class="mono">${fmtTxt}</span>. Acepta tabulaciones de Excel y puntos de miles.</label>
+        <textarea id="ta-todo" placeholder="${ej}"></textarea>
+        <div class="btnrow"><button type="button" class="primary" id="btn-pegar-todo">Aplicar</button></div>
+      </div>
+    </details>`;
+}
+
+function actualizarSumas() {
+  if (S.modo === "tot") {
+    const el = $("tot-sum"); if (el) el.textContent = fmt(S.listas.reduce((a, l) => a + l.total, 0));
+    return;
+  }
+  S.listas.forEach((l, i) => { const t = $("tabsum-" + i); if (t) t.textContent = fmt(votosLista(l)); });
+  const idx = S.listas.findIndex(l => l.numero === S.sel);
+  const l = S.listas[idx]; if (!l) return;
+  const ls = $("lsum"); if (ls) ls.textContent = fmt(votosLista(l));
+}
+
+/* ===================== RENDER: RESULTADOS ===================== */
+let R = null;
+function renderResultados() {
+  R = calcular();
+  const { bancas, ganadores, empate, analisis, validos } = R;
+  const emitidos = validos + S.blancos + S.nulos;
+  $("res-sub").textContent = `${fmt(validos)} válidos para listas · ${fmt(emitidos)} emitidos`;
+  $("banner").hidden = !(S.esc === "2026" && S.simulado);
+
+  // alertas
+  const al = [];
+  if (validos === 0) {
+    al.push(`<div class="empty">Todavía no hay votos cargados. ${S.modo === "pref" ? "Elegí una lista y cargá los votos preferenciales de sus candidatos, o pegá los datos en bloque." : "Cargá el total de cada lista."} Para ver el cálculo funcionando con datos reales, elegí el escenario “Verificación · Junta 2021”.</div>`);
+  }
+  if (S.esc === "2021") {
+    const ok = S.listas.every((l, i) => (l.oficial || 0) === bancas[i]);
+    const ofi = S.listas.filter(l => l.oficial).map(l => `${l.sigla} ${l.oficial}`).join(", ");
+    al.push(ok
+      ? `<div class="alert ok"><span><b>Coincide con el resultado oficial del TSJE</b> (${ofi}). El orden de asignación también coincide banca por banca.</span></div>`
+      : `<div class="alert bad"><span><b>No coincide con el resultado oficial</b> (${ofi}). Cambiaste algún dato del escenario de verificación.</span></div>`);
+  }
+  if (empate) {
+    const nom = i => `${esc(S.listas[i].numero)} · ${esc(S.listas[i].sigla)}`;
+    if (empate.porVotos) {
+      al.push(`<div class="alert warn"><span><b>Empate de cocientes en la última banca</b> (${fmtQ(empate.v, empate.d)}) entre ${empate.grupo.map(nom).join(" y ")}. Se resolvió a favor de la lista con más votos totales (art. 258 d): ${empate.ganadores.map(nom).join(", ")}.</span></div>`);
+    } else {
+      const picks = (S.sorteoKey === R.empateKey ? S.sorteo : []).filter(i => empate.sorteoIds.includes(i));
+      const quedan = empate.sorteoIds.filter(i => !picks.includes(i));
+      al.push(`<div class="alert bad">
+        <span><b>Empate total: mismos cocientes y mismos votos</b> entre ${empate.sorteoIds.map(nom).join(", ")} por ${empate.disputadas === 1 ? "1 banca" : empate.disputadas + " bancas"}. La ley manda resolver por sorteo (art. 258 d).</span>
+        ${empate.resuelto
+          ? `<span>Sorteo cargado: ${picks.map((i, n) => `${n + 1}º ${nom(i)}`).join(", ")}. <button type="button" data-sorteo-reset="1">Deshacer sorteo</button></span>`
+          : `<span>${picks.length ? `Ya elegiste: ${picks.map((i, n) => `${n + 1}º ${nom(i)}`).join(", ")}. ` : ""}Indicá quién ganó el sorteo${empate.disputadas > 1 ? " (en orden)" : ""}:</span>
+             <span class="btnrow">${quedan.map(i => `<button type="button" data-sorteo="${i}">${nom(i)}</button>`).join("")}${picks.length ? `<button type="button" data-sorteo-reset="1">Deshacer</button>` : ""}</span>
+             <span>Mientras tanto, ${empate.disputadas === 1 ? "esa banca se muestra" : "esas bancas se muestran"} rayada${empate.disputadas === 1 ? "" : "s"} y sin adjudicar.</span>`}
+      </div>`);
+    }
+  }
+  // empates internos en el corte de cada lista
+  if (S.modo === "pref") {
+    S.listas.forEach((l, i) => {
+      const o = R.orden[i], n = bancas[i];
+      if (!o || n === 0 || n >= o.length) return;
+      const a = o[n - 1], b = o[n];
+      if (a.pref === b.pref && votosLista(l) > 0) {
+        al.push(`<div class="alert warn"><span><b>Lista ${esc(l.numero)}: empate en votos preferenciales en el corte</b> (${fmt(a.pref)} votos) entre ${esc(a.nombre)} (orden ${a.original}) y ${esc(b.nombre)} (orden ${b.original}). Entra ${esc(a.nombre)} por estar antes en el orden original de la lista.</span></div>`);
+      }
+    });
+  }
+  $("alerts").innerHTML = al.join("");
+
+  renderHemi();
+  renderLeyenda();
+  renderResumen();
+  renderElectos();
+  renderCocientes();
+  renderEstadosCandidatos();
+}
+
+function hemiPuntos(n) {
+  const rows = n <= 4 ? 1 : n <= 12 ? 2 : n <= 30 ? 3 : n <= 60 ? 4 : 5;
+  const r0 = rows === 1 ? 1 : 0.5;
+  const radii = Array.from({ length: rows }, (_, k) => rows === 1 ? 1 : r0 + (1 - r0) * k / (rows - 1));
+  const tot = radii.reduce((a, b) => a + b, 0);
+  const counts = radii.map(r => Math.floor(n * r / tot));
+  let rem = n - counts.reduce((a, b) => a + b, 0);
+  for (let k = rows - 1; rem > 0; k = (k - 1 + rows) % rows) { counts[k]++; rem--; }
+  const pts = [];
+  radii.forEach((r, k) => {
+    const c = counts[k];
+    for (let j = 0; j < c; j++) {
+      const a = c === 1 ? Math.PI / 2 : Math.PI * (1 - j / (c - 1));
+      pts.push({ a, r });
+    }
+  });
+  pts.sort((p, q) => (q.a - p.a) || (p.r - q.r));
+  let minSp = Infinity;
+  radii.forEach((r, k) => { if (counts[k] > 1) minSp = Math.min(minSp, Math.PI * r / (counts[k] - 1)); });
+  const radial = rows > 1 ? (1 - r0) / (rows - 1) : Infinity;
+  return { pts, dot: Math.min(minSp, radial, 0.3) * 0.4 };
+}
+
+function renderHemi() {
+  const n = S.bancas;
+  const W = 320, H = 186, cx = 160, cy = 166, Rr = 140;
+  const { pts, dot } = hemiPuntos(n);
+  // asientos por lista: más bancas primero; las disputadas por sorteo al final
+  const firmes = S.listas.map(() => 0), disp = [];
+  R.ganadores.forEach(g => g.disputa ? disp.push(g.i) : firmes[g.i]++);
+  const orden = S.listas.map((l, i) => i).filter(i => firmes[i] > 0).sort((a, b) => firmes[b] - firmes[a] || a - b);
+  const seats = [];
+  orden.forEach(i => { for (let k = 0; k < firmes[i]; k++) seats.push({ i }); });
+  disp.forEach(() => seats.push({ disputa: true }));
+  while (seats.length < n) seats.push({});
+  const rr = dot * Rr;
+  const circles = pts.map((p, k) => {
+    const x = cx + Math.cos(p.a) * p.r * Rr, y = cy - Math.sin(p.a) * p.r * Rr;
+    const s = seats[k] || {};
+    if (s.i != null) {
+      const l = S.listas[s.i];
+      return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${rr.toFixed(1)}" fill="${l.color}" stroke="var(--ink)" stroke-opacity=".25" stroke-width="1"><title>Lista ${esc(l.numero)} · ${esc(l.sigla)}</title></circle>`;
+    }
+    if (s.disputa) return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${rr.toFixed(1)}" fill="url(#hatch)" stroke="var(--bad)" stroke-width="1.5"><title>Banca en disputa: sorteo pendiente</title></circle>`;
+    return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${rr.toFixed(1)}" fill="var(--seat-empty)"><title>Sin asignar</title></circle>`;
+  }).join("");
+  const asignadas = R.ganadores.length;
+  const resumen = orden.map(i => `${S.listas[i].sigla} ${firmes[i]}`).join(", ") || "sin bancas asignadas";
+  $("hemi").innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Hemiciclo de ${n} bancas: ${esc(resumen)}">
+    <defs><pattern id="hatch" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="5" height="5" fill="var(--sheet)"/><line x1="0" y1="0" x2="0" y2="5" stroke="var(--bad)" stroke-width="2"/></pattern></defs>
+    ${circles}
+    <text x="${cx}" y="${cy - 14}" text-anchor="middle" font-family="Archivo, Arial Narrow, sans-serif" font-weight="800" font-size="34" fill="var(--ink)">${asignadas}</text>
+    <text x="${cx}" y="${cy + 2}" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="8.5" letter-spacing="1" fill="var(--muted)">DE ${n} BANCAS</text>
+  </svg>`;
+}
+
+function renderLeyenda() {
+  const filas = S.listas.map((l, i) => ({ l, i, s: R.firmes[i], v: R.entradas[i].v }))
+    .filter(x => x.v > 0 || S.esc === "2026")
+    .sort((a, b) => b.s - a.s || b.v - a.v || a.i - b.i)
+    .slice(0, S.esc === "2021" ? 8 : 99);
+  $("legend").innerHTML = filas.map(x => `<div class="legend-row">${chip(x.l)}<span class="nm" title="${esc(x.l.nombre)}">${esc(x.l.nombre)}</span><span class="seats">${x.s}</span></div>`).join("")
+    + (S.esc === "2021" ? `<p class="small muted">Se muestran las 8 listas más votadas de 23.</p>` : "");
+}
+
+function renderResumen() {
+  const { bancas, analisis, validos, entradas } = R;
+  const filas = S.listas.map((l, i) => ({ l, i })).sort((a, b) => bancas[b.i] - bancas[a.i] || entradas[b.i].v - entradas[a.i].v || a.i - b.i);
+  const nom = i => `${esc(S.listas[i].sigla)}`;
+  $("tb-resumen").innerHTML = filas.map(({ l, i }) => {
+    const a = analisis[i], v = entradas[i].v;
+    const f = !v && !validos ? "—" : a.faltan ? `<span title="Le quitaría la banca a ${nom(a.faltan.contra)}">+${fmt(a.faltan.votos)}</span> <span class="muted small">(${nom(a.faltan.contra)})</span>` : "—";
+    const c = a.colchon ? (a.colchon.votos >= 0 ? `${fmt(a.colchon.votos)} <span class="muted small">(${nom(a.colchon.contra)})</span>` : `<span class="muted">en empate</span>`) : "—";
+    const enSorteo = bancas[i] - R.firmes[i];
+    return `<tr><td>${chip(l)}</td><td class="r num">${fmt(v)}</td><td class="r num">${pct(v, validos)}</td><td class="r num"><b>${R.firmes[i]}</b>${enSorteo ? ` <span class="small" style="color:var(--bad)">+ sorteo</span>` : ""}</td><td class="r num nowrap">${f}</td><td class="r num nowrap">${c}</td></tr>`;
+  }).join("");
+  const emit = validos + S.blancos + S.nulos;
+  $("tf-resumen").innerHTML = `
+    <tr><td>Válidos para listas</td><td class="r num">${fmt(validos)}</td><td class="r num">${validos ? "100,00 %" : "—"}</td><td class="r num">${R.ganadores.length}</td><td></td><td></td></tr>
+    <tr><td class="muted">Blancos / nulos</td><td class="r num muted">${fmt(S.blancos)} / ${fmt(S.nulos)}</td><td class="r small muted" colspan="4">No participan del reparto. Total emitidos: ${fmt(emit)}</td></tr>`;
+}
+
+function renderElectos() {
+  const box = $("electos");
+  if (!R.ganadores.length) { box.innerHTML = `<div class="empty">Cuando haya votos cargados, acá aparecen los ${S.bancas} titulares en el orden de asignación, con su suplente correspondiente.</div>`; return; }
+  const rows = R.ganadores.map(g => {
+    const l = S.listas[g.i];
+    const o = R.orden[g.i];
+    let cand = `<span class="muted">Candidato n.º ${g.d} según voto preferencial</span>`, pv = "—", mov = "";
+    if (o) {
+      const c = o[g.d - 1];
+      cand = esc(c.nombre) + (c.pref === 0 ? ` <span class="small muted">(completa por orden de lista)</span>` : "");
+      pv = fmt(c.pref);
+      const delta = c.original - c.final;
+      mov = `${c.original}${delta > 0 ? ` <span class="mv-up" title="Subió ${delta} lugares">▲${delta}</span>` : ""}`;
+    }
+    const banca = g.disputa ? `<span class="pill" style="background:var(--bad-bg);color:var(--bad)">sorteo</span>` : "";
+    return `<tr><td class="r num">${g.orden}</td><td class="nowrap">${chip(l)} ${banca}</td><td class="r num">${g.d}</td><td class="r num">${fmtQ(g.v, g.d)}</td><td style="min-width:190px">${cand}</td><td class="r num">${pv}</td><td class="r num nowrap">${mov || "—"}</td><td class="small muted nowrap">Suplente n.º ${g.d} de la lista</td></tr>`;
+  }).join("");
+  box.innerHTML = `<div class="tscroll"><table aria-label="Concejales electos">
+    <thead><tr><th class="r">Banca</th><th>Lista</th><th class="r">Divisor</th><th class="r">Cociente</th><th>Concejal titular</th><th class="r">Votos pref.</th><th class="r">Orden original</th><th>Suplente (orden de inscripción)</th></tr></thead>
+    <tbody>${rows}</tbody></table></div>
+    ${S.modo === "tot" ? `<p class="small muted">Para ver nombres, cargá los votos por candidato (modo “Por candidato”).</p>` : ""}`;
+}
+
+function renderCocientes() {
+  const { bancas, ganadores, empate, siguiente, entradas } = R;
+  const win = new Map(ganadores.map(g => [g.i + ":" + g.d, g]));
+  const maxB = Math.max(0, ...bancas);
+  const cols = Math.min(S.bancas, Math.max(3, maxB + 2));
+  const filas = S.listas.map((l, i) => ({ l, i })).filter(x => entradas[x.i].v > 0)
+    .sort((a, b) => entradas[b.i].v - entradas[a.i].v || a.i - b.i);
+  if (!filas.length) { $("qtable").innerHTML = `<tbody><tr><td class="muted">Sin votos cargados.</td></tr></tbody>`; return; }
+  const tieKeys = new Set();
+  if (empate) R.q.forEach(x => { if (Engine.cmpQ(x, { v: empate.v, d: empate.d }) === 0) tieKeys.add(x.i + ":" + x.d); });
+  const head = `<thead><tr><th>Lista</th>${Array.from({ length: cols }, (_, k) => `<th class="r">÷ ${k + 1}</th>`).join("")}</tr></thead>`;
+  const body = filas.map(({ l, i }) => {
+    const v = entradas[i].v;
+    const tds = Array.from({ length: cols }, (_, k) => {
+      const d = k + 1, key = i + ":" + d, g = win.get(key);
+      const cls = ["q"];
+      if (g) cls.push("win");
+      if (tieKeys.has(key)) cls.push("tie");
+      if (siguiente && siguiente.i === i && siguiente.d === d) cls.push("next");
+      return `<td class="${cls.join(" ")}" title="${fmt(v)} ÷ ${d}">${fmtQ(v, d)}${g ? `<sup>${g.orden}</sup>` : ""}</td>`;
+    }).join("");
+    return `<tr><td>${chip(l)} <span class="num small">${fmt(v)}</span></td>${tds}</tr>`;
+  }).join("");
+  $("qtable").innerHTML = head + `<tbody>${body}</tbody>`;
+}
+
+function renderEstadosCandidatos() {
+  if (S.modo !== "pref") return;
+  const idx = S.listas.findIndex(l => l.numero === S.sel);
+  const o = R.orden[idx]; if (!o) return;
+  const n = R.bancas[idx];
+  o.forEach(c => {
+    const k = c.original - 1;
+    const pos = $("pos-" + k), st = $("st-" + k), tr = $("cr-" + k);
+    if (!pos) return;
+    const sinVotos = R.entradas[idx].v === 0;
+    pos.textContent = sinVotos ? "—" : c.final;
+    const electo = !sinVotos && c.final <= n;
+    st.innerHTML = sinVotos ? "" : electo ? `<span class="pill tit">Titular ${c.final}.º de ${n}</span>` : `<span class="pill no">No electo</span>`;
+    tr.classList.toggle("is-tit", electo);
+  });
+}
+
+/* ===================== EVENTOS ===================== */
+let tRes = null;
+function recalcular(inmediato) {
+  actualizarSumas();
+  guardar();
+  clearTimeout(tRes);
+  if (inmediato) renderResultados(); else tRes = setTimeout(renderResultados, 60);
+}
+
+document.addEventListener("input", e => {
+  const t = e.target;
+  if (t.dataset.pv != null) {
+    const idx = S.listas.findIndex(l => l.numero === S.sel);
+    S.listas[idx].cands[Number(t.dataset.pv)].pref = toInt(t.value);
+    recalcular();
+  } else if (t.dataset.tot != null) {
+    S.listas[Number(t.dataset.tot)].total = toInt(t.value);
+    recalcular();
+  } else if (t.id === "p-blancos") { S.blancos = toInt(t.value); recalcular(); }
+  else if (t.id === "p-nulos") { S.nulos = toInt(t.value); recalcular(); }
+  else if (t.id === "p-bancas") {
+    if (!t.value) return;
+    const b = Math.min(99, Math.max(1, toInt(t.value) || 1));
+    S.bancas = b; recalcular();
+  }
+});
+// formatea con puntos de miles al salir del campo
+document.addEventListener("focusout", e => {
+  const t = e.target;
+  if (t.dataset && (t.dataset.pv != null || t.dataset.tot != null || t.id === "p-blancos" || t.id === "p-nulos")) {
+    const n = toInt(t.value); t.value = n ? fmt(n) : (t.id === "p-blancos" || t.id === "p-nulos" ? "0" : "");
+  }
+});
+// Enter baja al siguiente candidato (carga rápida desde el acta)
+document.addEventListener("keydown", e => {
+  const t = e.target;
+  if (e.key === "Enter" && t.dataset && (t.dataset.pv != null || t.dataset.tot != null)) {
+    e.preventDefault();
+    const inputs = [...document.querySelectorAll(t.dataset.pv != null ? "[data-pv]" : "[data-tot]")];
+    const nx = inputs[inputs.indexOf(t) + (e.shiftKey ? -1 : 1)];
+    if (nx) { nx.focus(); nx.select(); }
+  }
+});
+
+document.addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  if (b.dataset.tab) { S.sel = b.dataset.tab; guardar(); renderCarga(); renderEstadosCandidatos(); return; }
+  if (b.dataset.sorteo != null) {
+    const i = Number(b.dataset.sorteo);
+    if (S.sorteoKey !== R.empateKey) { S.sorteo = []; S.sorteoKey = R.empateKey; }
+    if (!S.sorteo.includes(i)) S.sorteo.push(i);
+    recalcular(true); return;
+  }
+  if (b.dataset.sorteoReset) { S.sorteo = []; S.sorteoKey = ""; recalcular(true); return; }
+  switch (b.id) {
+    case "m-pref": case "m-tot": {
+      if (S.esc === "2021" && b.id === "m-pref") { toast("El escenario 2021 solo tiene totales por lista"); return; }
+      S.modo = b.id === "m-pref" ? "pref" : "tot";
+      syncToolbar(); renderCarga(); recalcular(true); return;
+    }
+    case "btn-pegar-lista": pegarLista(); return;
+    case "btn-pegar-todo": pegarTodo(); return;
+    case "btn-copiar": copiar(); return;
+    case "btn-sim": simular(); return;
+    case "btn-borrar": borrar(b); return;
+  }
+});
+
+$("sel-esc").addEventListener("change", e => {
+  S = e.target.value === "2021" ? nuevo2021() : S2026;
+  syncToolbar(); renderCarga(); renderResultados();
+});
+
+function syncToolbar() {
+  $("sel-esc").value = S.esc;
+  $("m-pref").setAttribute("aria-pressed", String(S.modo === "pref"));
+  $("m-tot").setAttribute("aria-pressed", String(S.modo === "tot"));
+  $("m-pref").disabled = S.esc === "2021";
+  $("p-blancos").value = fmt(S.blancos);
+  $("p-nulos").value = fmt(S.nulos);
+  $("p-bancas").value = S.bancas;
+  $("btn-sim").disabled = S.esc === "2021";
+}
+
+/* ---- pegado ---- */
+function tokens(txt) {
+  return txt.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+}
+function campos(linea) {
+  return linea.split(/[;\t,|]+|\s{2,}/).map(s => s.trim()).filter(Boolean);
+}
+function pegarLista() {
+  const ta = $("ta-lista"); if (!ta) return;
+  let vals = tokens(ta.value);
+  if (vals.length === 1) vals = vals[0].split(/[;\t]+|\s+/).filter(Boolean);
+  const nums = vals.map(toInt);
+  const idx = S.listas.findIndex(l => l.numero === S.sel), l = S.listas[idx];
+  if (!nums.length) { toast("No encontré números para pegar"); return; }
+  if (nums.length !== l.cands.length) toast(`Pegaste ${nums.length} valores; la lista tiene ${l.cands.length} candidatos. Se aplicaron en orden.`);
+  nums.forEach((n, k) => { if (l.cands[k]) l.cands[k].pref = n; });
+  S.simulado = false;
+  renderCarga(); recalcular(true);
+  if (nums.length === l.cands.length) toast(`Lista ${l.numero}: ${nums.length} votos aplicados`);
+}
+function pegarTodo() {
+  const ta = $("ta-todo"); if (!ta) return;
+  let ok = 0, malas = 0;
+  tokens(ta.value).forEach(line => {
+    const f = campos(line);
+    if (S.modo === "tot") {
+      if (f.length < 2) { malas++; return; }
+      const l = S.listas.find(x => x.numero === String(toInt(f[0])));
+      if (!l) { malas++; return; }
+      l.total = toInt(f[f.length - 1]); ok++;
+    } else {
+      if (f.length < 3) { malas++; return; }
+      const l = S.listas.find(x => x.numero === String(toInt(f[0])));
+      const k = toInt(f[1]) - 1;
+      if (!l || !l.cands[k]) { malas++; return; }
+      l.cands[k].pref = toInt(f[f.length - 1]); ok++;
+    }
+  });
+  S.simulado = false;
+  renderCarga(); recalcular(true);
+  toast(`${ok} filas aplicadas${malas ? `, ${malas} ignoradas (lista u orden inexistente)` : ""}`);
+}
+
+/* ---- simulación, borrado, copia ---- */
+function simular() {
+  if (S.esc !== "2026") return;
+  // pesos al azar por lista y por candidato; solo para probar la herramienta
+  const total = 240000 + Math.floor(Math.random() * 60000);
+  const w = S.listas.map(() => Math.pow(Math.random(), 2.2) + 0.01);
+  const sw = w.reduce((a, b) => a + b, 0);
+  S.listas.forEach((l, i) => {
+    const vt = Math.round(total * w[i] / sw);
+    const cw = l.cands.map((_, k) => Math.pow(Math.random(), 1.6) * (k < 3 ? 2 : 1) + 0.02);
+    const sc = cw.reduce((a, b) => a + b, 0);
+    l.cands.forEach((c, k) => { c.pref = Math.round(vt * cw[k] / sc); });
+  });
+  S.blancos = Math.round(total * 0.035); S.nulos = Math.round(total * 0.006);
+  S.modo = "pref"; S.simulado = true; S.sorteo = []; S.sorteoKey = "";
+  syncToolbar(); renderCarga(); recalcular(true);
+  toast("Simulación cargada. No son resultados reales.");
+}
+let armado = null;
+function borrar(b) {
+  if (!b.classList.contains("armed")) {
+    b.classList.add("armed"); b.textContent = "Tocá de nuevo para borrar";
+    clearTimeout(armado); armado = setTimeout(() => { b.classList.remove("armed"); b.textContent = "Borrar votos"; }, 3500);
+    return;
+  }
+  clearTimeout(armado); b.classList.remove("armed"); b.textContent = "Borrar votos";
+  S.listas.forEach(l => { l.total = 0; l.cands.forEach(c => { c.pref = 0; }); });
+  S.blancos = 0; S.nulos = 0; S.simulado = false; S.sorteo = []; S.sorteoKey = "";
+  syncToolbar(); renderCarga(); recalcular(true);
+  toast("Votos borrados");
+}
+function textoResultado() {
+  const L = [];
+  L.push(`Junta Municipal de Asunción: reparto de ${S.bancas} bancas (D'Hondt, art. 258 Código Electoral)${S.esc === "2021" ? " · verificación 2021" : ""}${S.simulado ? " · SIMULACIÓN, NO SON RESULTADOS REALES" : ""}`);
+  L.push(`Válidos para listas: ${fmt(R.validos)} · Blancos: ${fmt(S.blancos)} · Nulos: ${fmt(S.nulos)}`);
+  L.push("");
+  S.listas.map((l, i) => ({ l, i })).filter(x => R.entradas[x.i].v > 0)
+    .sort((a, b) => R.bancas[b.i] - R.bancas[a.i] || R.entradas[b.i].v - R.entradas[a.i].v)
+    .forEach(({ l, i }) => L.push(`Lista ${l.numero} ${l.sigla}: ${R.bancas[i]} bancas · ${fmt(R.entradas[i].v)} votos (${pct(R.entradas[i].v, R.validos)})`));
+  if (R.ganadores.length) {
+    L.push(""); L.push("Titulares en orden de asignación:");
+    R.ganadores.forEach(g => {
+      const l = S.listas[g.i], o = R.orden[g.i];
+      const c = o ? o[g.d - 1] : null;
+      L.push(`${g.orden}. Lista ${l.numero} ${l.sigla} (÷${g.d} = ${fmtQ(g.v, g.d)})${c ? ` · ${c.nombre} · ${fmt(c.pref)} votos pref.` : ""}${g.disputa ? " · SORTEO PENDIENTE" : ""}`);
+    });
+  }
+  return L.join("\n");
+}
+async function copiar() {
+  const txt = textoResultado();
+  try { await navigator.clipboard.writeText(txt); toast("Resultado copiado"); }
+  catch (e) {
+    const ta = document.createElement("textarea"); ta.value = txt; ta.setAttribute("aria-label", "Resultado para copiar");
+    ta.style.minHeight = "200px"; $("alerts").prepend(ta); ta.focus(); ta.select();
+    toast("Seleccioná el texto y copialo");
+  }
+}
+
+/* ===================== INICIO ===================== */
+syncToolbar();
+renderCarga();
+renderResultados();
+</script>
+</body>
+</html>
